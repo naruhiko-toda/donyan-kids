@@ -51,6 +51,8 @@ export const SketchCanvas: React.FC<SketchCanvasProps> = ({
         .maxPointers(1)
         .onBegin((e) => {
           editingPointsRef.current = [{ x: e.x, y: e.y, t: Date.now() }];
+          // trigger re-render immediately so a tap/start shows the first point
+          runOnJS(setRenderVersion)((v) => v + 1);
         })
         .onUpdate((e) => {
           editingPointsRef.current.push({ x: e.x, y: e.y, t: Date.now() });
