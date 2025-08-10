@@ -1,26 +1,25 @@
 import { useCallback, useMemo, useState } from "react";
 import { Pressable, SafeAreaView, StyleSheet, Text, useWindowDimensions, View } from "react-native";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
+import images from "./src/masterdata/images.json";
+import { resolveImagePath } from "./src/masterdata/resolveImage";
 import SketchCanvas from "./src/modules/draw/canvas/SketchCanvas";
 
-const imagePool = [
-  "https://picsum.photos/seed/a/1200/1800",
-  "https://picsum.photos/seed/b/1200/1800",
-  "https://picsum.photos/seed/c/1200/1800",
-  "https://picsum.photos/seed/d/1200/1800",
-  "https://picsum.photos/seed/e/1200/1800",
-];
+type MasterImage = { id: string; order: number; path: string };
+const masterImages: MasterImage[] = (images as MasterImage[])
+  .slice()
+  .sort((a, b) => a.order - b.order);
 
 export default function App() {
   const { width, height } = useWindowDimensions();
-  const [index, setIndex] = useState(() => Math.floor(Math.random() * imagePool.length));
+  const [index, setIndex] = useState(0);
   const [color, _setColor] = useState("#111827");
   const [strokeWidth, _setStrokeWidth] = useState(8);
 
-  const currentImage = useMemo(() => imagePool[index], [index]);
+  const currentImage = useMemo(() => resolveImagePath(masterImages[index]?.path ?? ""), [index]);
 
   const nextImage = useCallback(() => {
-    setIndex((prev) => (prev + 1) % imagePool.length);
+    setIndex((prev) => (prev + 1) % masterImages.length);
   }, []);
 
   return (

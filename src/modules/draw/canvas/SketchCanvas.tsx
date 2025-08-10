@@ -10,7 +10,7 @@ import { buildPathFromPoints } from "../utils/path";
 export type SketchCanvasProps = {
   width: number;
   height: number;
-  backgroundImageUri?: string;
+  backgroundImageUri?: string | number; // remote URL string or require(asset)
   color: string;
   strokeWidth: number;
   onCommitStroke?: (stroke: Stroke) => void;
