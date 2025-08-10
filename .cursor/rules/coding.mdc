@@ -1,0 +1,184 @@
+---
+description: 
+globs: 
+alwaysApply: true
+---
+
+# 目的
+
+この文書は、LLM（AIアシスタント）が本リポジトリの実装支援を行う際の**前提・ルール・スタイル**を明確にするためのハンドブックです。コード提案の一貫性・保守性・安全性を担保することを目的とします。
+
+
+ここに書かれている内容とユーザーの要求があった場合は、必ず内容を確認した上で、ルールを書き換えてください。
+---
+
+# 技術スタックと前提
+
+- **App 基盤**: Expo（React Native, Managed Workflow）
+- **描画**: `@shopify/react-native-skia`
+- **入力/ジェスチャ**: `react-native-gesture-handler`
+- **アニメーション**: `react-native-reanimated`
+- **言語/型**: TypeScript（strict）
+- **PM/Runner**: Bun（`bun install` / `bunx`）
+- **ナビゲーション**: 必要になるまで導入しない（単画面で開始）
+- **バックエンド/認証**: 当面なし（ローカル保存/共有のみ）
+
+### 非目標（LLMは提案しないこと）
+
+- バックエンド/API/ログイン機構の実装
+- iOS/Android ネイティブモジュールの自作（まずは既存ライブラリで）
+
+---
+
+# ディレクトリ構成（初期）
+
+```
+app/                # (必要なら) Expo Router 用。初期は App.tsx のみでも可
+src/
+  components/
+  modules/
+    draw/
+      canvas/       # Skia キャンバス関連
+      model/        # Stroke/Path 等の型とロジック
+      state/        # Zustand 等の状態管理（必要になったら）
+  lib/
+  styles/
+  utils/
+assets/
+babel.config.js
+app.json | app.config.ts
+package.json
+README.md
+CONTRIBUTING-LLM.md
+```
+
+---
+
+# TypeScript/コード規約
+
+1. **strict** を有効化。`tsconfig.json` は `"strict": true`。
+2. **型を先に定義**：関数やコンポーネントを作る前に、引数・戻り値・状態の型を提示する。
+3. **命名**：
+   - コンポーネント: `PascalCase`（例: `SketchCanvas`）
+   - 変数/関数: `camelCase`
+   - 型/インターフェイス: `PascalCase` + `Props`, `State`, `Options` 等（例: `Stroke`, `SketchCanvasProps`）
+4. **import 順序**：外部→エイリアス(`@/`)→相対の順。未使用 import は禁止。
+5. **副作用を避ける**：モジュール読込時の副作用は作らない（初期化はコンポーネント/関数内）。
+6. **コメント**：処理の意図と前提を書く。ロジックが読めるところは冗長にしない。
+7. **ESLint/Prettier**：推奨設定に準拠（ルールは後日導入）。
+
+---
+
+# 描画ドメイン設計（最小）
+
+### Stroke モデル
+
+```ts
+export type Point = { x: number; y: number; t: number }; // 端末座標・タイムスタンプ
+export type Stroke = {
+  id: string;
+  color: string;        // hex (例: "#111827")
+  width: number;        // px 単位
+  points: Point[];      // 描画順
+};
+```
+
+- **不変更新**：`points` への push はコピー（もしくはバッファに追記して最後に確定）
+- **端末座標系**：ピクセル密度は Skia が吸収。保存は端末座標でよい（後で正規化関数を追加）
+
+### レイヤ/履歴（後で拡張）
+
+- `strokes: Stroke[]` を時間順で保持し、Undo/Redo 用に履歴スタックを別管理
+- 将来的にレイヤIDを付けられるよう、`stroke.layerId` を追加予定
+
+---
+
+# Skia 実装ルール
+
+1. **Canvas は単一責務**：`SketchCanvas` は「入力→Path→描画」のみ担当。UI は親が持つ。
+2. **Path 生成**：`Skia.Path()` + 簡易スムージング（必要なら Catmull-Rom/Bezier をユーティリティ関数で）
+3. **Repaint 最小化**：
+   - 入力中は現在編集中のストロークのみ再描画
+   - 確定後に `strokes` に commit
+4. **エクスポート**：PNG/JPEG は Skia の snapshot / `makeImageSnapshot` を優先（端末依存のズレを回避）
+5. **座標系の一貫性**：全タッチ座標は Canvas のローカル座標に変換して保持
+
+---
+
+# Gesture/入力ルール
+
+1. **Gesture Handler + Reanimated** の `Pan` を使用。
+2. **低レイテンシ**：`onTouchesMove`/`onUpdate` で生の座標を受け取り、`points` に逐次追加。
+3. **誤タッチ防止**：タップ距離・時間のしきい値を持ち、点一個だけのノイズは破棄。
+4. **Multi-touch 先送り**：初期は単一指のみサポート（LLMは複数指対応を勝手に入れない）。
+
+---
+
+# Reanimated ルール
+
+1. `react-native-reanimated/plugin` を Babel に追加した前提でコード提案。
+2. UI スレッドで必要な計算のみを `useSharedValue` / `useAnimatedStyle` で扱う。
+3. ジェスチャ座標など**描画に直結する値のみ**を共有値にする。ビジネスロジックは JS スレッド。
+
+---
+
+# パフォーマンス
+
+- 毎フレームの配列コピーを避ける（編集中ストロークは小バッファに追記→確定時に freeze）
+- 再レンダリング抑制：メモ化（`React.memo`）、依存配列の最小化
+- 大量ストローク時は**簡易ベクター化**（線幅が同じなら Path を結合）を検討
+
+---
+
+# 画像入出力
+
+- 保存：PNG（透過対応）を優先。品質調整は後回し。
+- 共有：Expo の `Sharing` を使う。パーミッションは必要時にだけ要求。
+
+---
+
+# UI/UX（最小）
+
+- 画面は **全画面キャンバス + 最小ツールバー**
+- 初期ツール：色（3色）・太さ（3段階）・消しゴム・全消去・保存
+- タップ領域は 44px 以上
+
+---
+
+# Definition of Done（DoD）
+
+- iOS/Android で指描画が 60fps でスムーズ
+- Stroke の保存/読み込み/全消去が動く
+- PNG エクスポートが端末ギャラリー/共有に流せる
+- 型エラー/Eslint エラーなし、ビルド OK
+
+---
+
+# LLM へのプロンプト指針
+
+- **提出順序**：1) 型定義 → 2) 疑似コード/フローチャート → 3) 最小実装 → 4) テスト手順
+- **依存追加時**は理由と代替案を併記
+- **差分パッチ形式**（変更ファイル、追加/削除）で提案
+- **安全装置**：ファイル削除・大規模改変は必ず要確認フラグをつける
+
+---
+
+# コミット/PR
+
+- Conventional Commits（`feat:`, `fix:`, `chore:` 等）
+- PR は「目的・前提・スクリーンショット（必要なら）・動作確認手順」を必須
+
+---
+
+# 既知の落とし穴
+
+- Reanimated の Babel 設定漏れ
+- GestureHandler のラッパ（`GestureHandlerRootView`）未設定
+- Skia の座標系とレイアウトのズレ（親の padding/transform 影響に注意）
+
+---
+
+# 参考（実装タスクリスト・初期）
+
+-
+
