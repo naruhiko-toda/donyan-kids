@@ -1,5 +1,5 @@
-import { Skia, Path } from '@shopify/react-native-skia';
-import type { Point } from '../model/types';
+import { type Path, Skia } from "@shopify/react-native-skia";
+import type { Point } from "../model/types";
 
 // Simple polyline to Path (no smoothing). Can be improved to Catmull-Rom later.
 export const buildPathFromPoints = (points: Point[]): Path => {
@@ -13,5 +13,3 @@ export const buildPathFromPoints = (points: Point[]): Path => {
   }
   return path;
 };
-
-

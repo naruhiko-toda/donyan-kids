@@ -8,7 +8,10 @@
     "start:ios": "expo start --ios",
     "android": "expo run:android",
     "ios": "expo run:ios",
-    "web": "expo start --web"
+    "web": "expo start --web",
+    "lint": "biome check .",
+    "format": "biome format --write .",
+    "prepare": "husky"
   },
   "dependencies": {
     "@expo/metro-runtime": "~5.0.4",
@@ -27,8 +30,16 @@
   },
   "devDependencies": {
     "@babel/core": "^7.25.2",
+    "@biomejs/biome": "^2.1.4",
     "@types/react": "~19.0.10",
+    "husky": "^9.1.7",
+    "lint-staged": "^16.1.5",
     "typescript": "~5.8.3"
+  },
+  "lint-staged": {
+    "*.{ts,tsx,js,jsx,json,md,css,scss}": [
+      "biome check --write"
+    ]
   },
   "private": true
 }

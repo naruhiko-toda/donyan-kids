@@ -1,10 +1,11 @@
-import React, { useCallback, useMemo, useRef, useState } from 'react';
-import { StyleSheet } from 'react-native';
-import { Canvas, Image as SkiaImage, Path as SkiaPath, useImage } from '@shopify/react-native-skia';
-import { Gesture, GestureDetector } from 'react-native-gesture-handler';
-import { runOnJS } from 'react-native-reanimated';
-import type { Point, Stroke } from '../model/types';
-import { buildPathFromPoints } from '../utils/path';
+import { Canvas, Image as SkiaImage, Path as SkiaPath, useImage } from "@shopify/react-native-skia";
+import type React from "react";
+import { useCallback, useMemo, useRef, useState } from "react";
+import { StyleSheet } from "react-native";
+import { Gesture, GestureDetector } from "react-native-gesture-handler";
+import { runOnJS } from "react-native-reanimated";
+import type { Point, Stroke } from "../model/types";
+import { buildPathFromPoints } from "../utils/path";
 
 export type SketchCanvasProps = {
   width: number;
@@ -25,7 +26,7 @@ export const SketchCanvas: React.FC<SketchCanvasProps> = ({
 }) => {
   const editingPointsRef = useRef<Point[]>([]);
   const [committedStrokes, setCommittedStrokes] = useState<Stroke[]>([]);
-  const [renderVersion, setRenderVersion] = useState(0);
+  const [, setRenderVersion] = useState(0);
 
   const bgImage = useImage(backgroundImageUri ?? null);
 
@@ -41,49 +42,64 @@ export const SketchCanvas: React.FC<SketchCanvasProps> = ({
       setCommittedStrokes((prev) => [...prev, stroke]);
       onCommitStroke?.(stroke);
     },
-    [color, onCommitStroke, strokeWidth]
+    [color, onCommitStroke, strokeWidth],
   );
 
-  const pan = useMemo(() =>
-    Gesture.Pan()
-      .maxPointers(1)
-      .onBegin((e) => {
-        editingPointsRef.current = [{ x: e.x, y: e.y, t: Date.now() }];
-      })
-      .onUpdate((e) => {
-        editingPointsRef.current.push({ x: e.x, y: e.y, t: Date.now() });
-        // trigger re-render for live stroke
-        runOnJS(setRenderVersion)((v) => v + 1);
-      })
-      .onEnd(() => {
-        const finished = editingPointsRef.current;
-        editingPointsRef.current = [];
-        runOnJS(handleCommit)(finished);
-      })
-      .onFinalize(() => {
-        editingPointsRef.current = [];
-      })
-  , [handleCommit]);
+  const pan = useMemo(
+    () =>
+      Gesture.Pan()
+        .maxPointers(1)
+        .onBegin((e) => {
+          editingPointsRef.current = [{ x: e.x, y: e.y, t: Date.now() }];
+        })
+        .onUpdate((e) => {
+          editingPointsRef.current.push({ x: e.x, y: e.y, t: Date.now() });
+          // trigger re-render for live stroke
+          runOnJS(setRenderVersion)((v) => v + 1);
+        })
+        .onEnd(() => {
+          const finished = editingPointsRef.current;
+          editingPointsRef.current = [];
+          runOnJS(handleCommit)(finished);
+        })
+        .onFinalize(() => {
+          editingPointsRef.current = [];
+        }),
+    [handleCommit],
+  );
 
-  const currentPath = useMemo(() => {
-    return buildPathFromPoints(editingPointsRef.current);
-  }, [renderVersion]);
+  const currentPath = buildPathFromPoints(editingPointsRef.current);
 
   return (
     <GestureDetector gesture={pan}>
-      <Canvas style={[styles.canvas, { width, height }]}>        
+      <Canvas style={[styles.canvas, { width, height }]}>
         {bgImage && (
           <SkiaImage image={bgImage} x={0} y={0} width={width} height={height} fit="cover" />
         )}
 
         {/* committed strokes */}
         {committedStrokes.map((s) => (
-          <SkiaPath key={s.id} path={buildPathFromPoints(s.points)} color={s.color} strokeWidth={s.width} style="stroke" strokeCap="round" strokeJoin="round" />
+          <SkiaPath
+            key={s.id}
+            path={buildPathFromPoints(s.points)}
+            color={s.color}
+            strokeWidth={s.width}
+            style="stroke"
+            strokeCap="round"
+            strokeJoin="round"
+          />
         ))}
 
         {/* editing stroke */}
         {editingPointsRef.current.length > 0 && (
-          <SkiaPath path={currentPath} color={color} strokeWidth={strokeWidth} style="stroke" strokeCap="round" strokeJoin="round" />
+          <SkiaPath
+            path={currentPath}
+            color={color}
+            strokeWidth={strokeWidth}
+            style="stroke"
+            strokeCap="round"
+            strokeJoin="round"
+          />
         )}
       </Canvas>
     </GestureDetector>
@@ -97,5 +113,3 @@ const styles = StyleSheet.create({
 });
 
 export default SketchCanvas;
-
-

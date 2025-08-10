@@ -10,5 +10,3 @@ export type Stroke = {
   width: number; // px
   points: Point[]; // ordered
 };
-
-

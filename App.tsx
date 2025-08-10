@@ -1,21 +1,21 @@
-import React, { useCallback, useMemo, useState } from 'react';
-import { SafeAreaView, StyleSheet, View, Pressable, Text, useWindowDimensions, ImageBackground } from 'react-native';
-import { GestureHandlerRootView } from 'react-native-gesture-handler';
-import SketchCanvas from './src/modules/draw/canvas/SketchCanvas';
+import { useCallback, useMemo, useState } from "react";
+import { Pressable, SafeAreaView, StyleSheet, Text, useWindowDimensions, View } from "react-native";
+import { GestureHandlerRootView } from "react-native-gesture-handler";
+import SketchCanvas from "./src/modules/draw/canvas/SketchCanvas";
 
 const imagePool = [
-  'https://picsum.photos/seed/a/1200/1800',
-  'https://picsum.photos/seed/b/1200/1800',
-  'https://picsum.photos/seed/c/1200/1800',
-  'https://picsum.photos/seed/d/1200/1800',
-  'https://picsum.photos/seed/e/1200/1800',
+  "https://picsum.photos/seed/a/1200/1800",
+  "https://picsum.photos/seed/b/1200/1800",
+  "https://picsum.photos/seed/c/1200/1800",
+  "https://picsum.photos/seed/d/1200/1800",
+  "https://picsum.photos/seed/e/1200/1800",
 ];
 
 export default function App() {
   const { width, height } = useWindowDimensions();
   const [index, setIndex] = useState(() => Math.floor(Math.random() * imagePool.length));
-  const [color, setColor] = useState('#111827');
-  const [strokeWidth, setStrokeWidth] = useState(8);
+  const [color, _setColor] = useState("#111827");
+  const [strokeWidth, _setStrokeWidth] = useState(8);
 
   const currentImage = useMemo(() => imagePool[index], [index]);
 
@@ -51,7 +51,7 @@ export default function App() {
 const styles = StyleSheet.create({
   root: {
     flex: 1,
-    backgroundColor: '#fff',
+    backgroundColor: "#fff",
   },
   container: {
     flex: 1,
@@ -59,9 +59,9 @@ const styles = StyleSheet.create({
   toolbar: {
     height: 64,
     paddingHorizontal: 16,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'flex-start',
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "flex-start",
     gap: 12,
   },
   btn: {
@@ -70,11 +70,11 @@ const styles = StyleSheet.create({
     borderRadius: 8,
   },
   btnPrimary: {
-    backgroundColor: '#2563eb',
+    backgroundColor: "#2563eb",
   },
   btnText: {
-    color: '#fff',
-    fontWeight: '600',
+    color: "#fff",
+    fontWeight: "600",
   },
   canvasContainer: {
     flex: 1,
