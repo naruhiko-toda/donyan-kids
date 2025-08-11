@@ -1,8 +1,9 @@
-import { type Path, Skia } from "@shopify/react-native-skia";
+import { Skia } from "@shopify/react-native-skia";
 import type { Point } from "../model/types";
 
 // Simple polyline to Path (no smoothing). Can be improved to Catmull-Rom later.
-export const buildPathFromPoints = (points: Point[]): Path => {
+type SkiaPathInstance = ReturnType<typeof Skia.Path.Make>;
+export const buildPathFromPoints = (points: Point[]): SkiaPathInstance => {
   const path = Skia.Path.Make();
   if (points.length === 0) return path;
 

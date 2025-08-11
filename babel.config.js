@@ -3,7 +3,6 @@ module.exports = (api) => {
   return {
     presets: ["babel-preset-expo"],
     plugins: [
-      "react-native-worklets/plugin",
       // Reanimated plugin MUST be listed last
       "react-native-reanimated/plugin",
     ],

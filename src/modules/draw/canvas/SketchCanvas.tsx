@@ -1,4 +1,10 @@
-import { Canvas, Image as SkiaImage, Path as SkiaPath, useImage } from "@shopify/react-native-skia";
+import {
+  Canvas,
+  Skia,
+  Image as SkiaImage,
+  Path as SkiaPath,
+  useImage,
+} from "@shopify/react-native-skia";
 import type React from "react";
 import { useCallback, useMemo, useRef, useState } from "react";
 import { StyleSheet } from "react-native";
@@ -25,8 +31,15 @@ export const SketchCanvas: React.FC<SketchCanvasProps> = ({
   onCommitStroke,
 }) => {
   const editingPointsRef = useRef<Point[]>([]);
-  const [committedStrokes, setCommittedStrokes] = useState<Stroke[]>([]);
+  const livePathRef = useRef(Skia.Path.Make());
   const [, setRenderVersion] = useState(0);
+  type CommittedPath = {
+    id: string;
+    color: string;
+    width: number;
+    path: ReturnType<typeof Skia.Path.Make>;
+  };
+  const [committedPaths, setCommittedPaths] = useState<CommittedPath[]>([]);
 
   const bgImage = useImage(backgroundImageUri ?? null);
 
@@ -39,7 +52,11 @@ export const SketchCanvas: React.FC<SketchCanvasProps> = ({
         width: strokeWidth,
         points: points.slice(),
       };
-      setCommittedStrokes((prev) => [...prev, stroke]);
+      const strokePath = buildPathFromPoints(points);
+      setCommittedPaths((prev) => [
+        ...prev,
+        { id: stroke.id, color: stroke.color, width: stroke.width, path: strokePath },
+      ]);
       onCommitStroke?.(stroke);
     },
     [color, onCommitStroke, strokeWidth],
@@ -50,27 +67,32 @@ export const SketchCanvas: React.FC<SketchCanvasProps> = ({
       Gesture.Pan()
         .maxPointers(1)
         .onBegin((e) => {
+          // reset live path and start from current point
+          livePathRef.current.reset();
+          livePathRef.current.moveTo(e.x, e.y);
           editingPointsRef.current = [{ x: e.x, y: e.y, t: Date.now() }];
-          // trigger re-render immediately so a tap/start shows the first point
-          runOnJS(setRenderVersion)((v) => v + 1);
+          runOnJS(setRenderVersion)((v) => v + 1); // show first dot immediately
         })
         .onUpdate((e) => {
+          // append to live path incrementally to avoid rebuilding path each frame
+          livePathRef.current.lineTo(e.x, e.y);
           editingPointsRef.current.push({ x: e.x, y: e.y, t: Date.now() });
-          // trigger re-render for live stroke
           runOnJS(setRenderVersion)((v) => v + 1);
         })
         .onEnd(() => {
           const finished = editingPointsRef.current;
           editingPointsRef.current = [];
           runOnJS(handleCommit)(finished);
+          // clear live path after committing
+          livePathRef.current.reset();
+          runOnJS(setRenderVersion)((v) => v + 1);
         })
         .onFinalize(() => {
           editingPointsRef.current = [];
+          livePathRef.current.reset();
         }),
     [handleCommit],
   );
-
-  const currentPath = buildPathFromPoints(editingPointsRef.current);
 
   return (
     <GestureDetector gesture={pan}>
@@ -79,11 +101,11 @@ export const SketchCanvas: React.FC<SketchCanvasProps> = ({
           <SkiaImage image={bgImage} x={0} y={0} width={width} height={height} fit="cover" />
         )}
 
-        {/* committed strokes */}
-        {committedStrokes.map((s) => (
+        {/* committed strokes (pre-built paths) */}
+        {committedPaths.map((s) => (
           <SkiaPath
             key={s.id}
-            path={buildPathFromPoints(s.points)}
+            path={s.path}
             color={s.color}
             strokeWidth={s.width}
             style="stroke"
@@ -92,17 +114,15 @@ export const SketchCanvas: React.FC<SketchCanvasProps> = ({
           />
         ))}
 
-        {/* editing stroke */}
-        {editingPointsRef.current.length > 0 && (
-          <SkiaPath
-            path={currentPath}
-            color={color}
-            strokeWidth={strokeWidth}
-            style="stroke"
-            strokeCap="round"
-            strokeJoin="round"
-          />
-        )}
+        {/* editing stroke (mutated SkPath) */}
+        <SkiaPath
+          path={livePathRef.current}
+          color={color}
+          strokeWidth={strokeWidth}
+          style="stroke"
+          strokeCap="round"
+          strokeJoin="round"
+        />
       </Canvas>
     </GestureDetector>
   );
