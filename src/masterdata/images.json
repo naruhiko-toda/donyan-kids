@@ -1,27 +1,7 @@
 [
-  {
-    "id": "2f1b2c2d-6a52-4a7f-9f77-2fb1f1b7a001",
-    "order": 1,
-    "path": "https://picsum.photos/seed/a/1200/1800"
-  },
-  {
-    "id": "2f1b2c2d-6a52-4a7f-9f77-2fb1f1b7a002",
-    "order": 2,
-    "path": "https://picsum.photos/seed/b/1200/1800"
-  },
-  {
-    "id": "2f1b2c2d-6a52-4a7f-9f77-2fb1f1b7a003",
-    "order": 3,
-    "path": "https://picsum.photos/seed/c/1200/1800"
-  },
-  {
-    "id": "2f1b2c2d-6a52-4a7f-9f77-2fb1f1b7a004",
-    "order": 4,
-    "path": "https://picsum.photos/seed/d/1200/1800"
-  },
-  {
-    "id": "2f1b2c2d-6a52-4a7f-9f77-2fb1f1b7a005",
-    "order": 5,
-    "path": "https://picsum.photos/seed/e/1200/1800"
-  }
+  { "id": "2f1b2c2d-6a52-4a7f-9f77-2fb1f1b7a001", "order": 1 },
+  { "id": "2f1b2c2d-6a52-4a7f-9f77-2fb1f1b7a002", "order": 2 },
+  { "id": "2f1b2c2d-6a52-4a7f-9f77-2fb1f1b7a003", "order": 3 },
+  { "id": "2f1b2c2d-6a52-4a7f-9f77-2fb1f1b7a004", "order": 4 },
+  { "id": "2f1b2c2d-6a52-4a7f-9f77-2fb1f1b7a005", "order": 5 }
 ]

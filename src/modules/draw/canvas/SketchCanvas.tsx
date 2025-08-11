@@ -110,7 +110,7 @@ export const SketchCanvas: React.FC<SketchCanvasProps> = ({
     <GestureDetector gesture={pan}>
       <Canvas style={[styles.canvas, { width, height }]}>
         {bgImage && (
-          <SkiaImage image={bgImage} x={0} y={0} width={width} height={height} fit="cover" />
+          <SkiaImage image={bgImage} x={0} y={0} width={width} height={height} fit="contain" />
         )}
 
         {/* committed strokes (pre-built paths) */}

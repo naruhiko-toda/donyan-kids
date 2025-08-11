@@ -49,19 +49,18 @@ alwaysApply: true
 - **適用場面**: 表示対象画像を追加・並び替えする時
 - **詳細**:
   - 変更ファイル: `src/masterdata/images.json`
-  - スキーマ: `{ id: string(uuid v4), order: number, path: string }`
+  - スキーマ: `{ id: string(uuid v4), order: number }`
   - `order` はユニーク昇順で管理（1,2,3,... を推奨）
-  - `path` は以下のいずれか:
-    - ローカル: ルール4で登録したキー（例: `"animals/cat-01"`）
-    - リモート: `https://` で始まるフルURL
+  - ローカル画像の配置規約（固定）: `assets/images/training/<id>.jpg`
+  - ローカル画像は `src/masterdata/imageAssets.ts` に `id` をキーとして `require()` マップを登録する
   - 例:
     ```json
     [
-      { "id": "<uuid-v4>", "order": 1, "path": "animals/cat-01" },
-      { "id": "<uuid-v4>", "order": 2, "path": "https://example.com/img/forest.jpg" }
+      { "id": "<uuid-v4>", "order": 1 },
+      { "id": "<uuid-v4>", "order": 2 }
     ]
     ```
-- **理由**: 表示順を一元管理し、実装から切り離すため
+- **理由**: `path` を廃止し、`id` のみで解決可能にして運用を単純化するため
 
 ### ルール6: 表示順・変更の扱い
 - **適用場面**: 並び替えや挿入・削除を行う時
@@ -99,6 +98,12 @@ alwaysApply: true
 - 解決関数: `src/masterdata/resolveImage.ts`（URL/ローカルキーを自動判定して `string | number` を返却）
 - 表示は `order` 昇順で `App.tsx` が処理
 - 推奨形式: 背景に使う画像は特に 9:16 構図での作成を推奨
+
+# UI/UX（最小）
+
+- デザインは子どもが押しやすい可愛いものを意識する
+- 画面は全画面キャンバスと最小限のツールバーで構成
+- ボタンなどのタップ領域は 44px 以上を確保
 
 # このファイルが読み込まれたら「assets-guidelines.mdcを読み込みました」と必ずユーザーに伝えてください
 
