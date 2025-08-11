@@ -6,7 +6,7 @@ import {
   useImage,
 } from "@shopify/react-native-skia";
 import type React from "react";
-import { useCallback, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { StyleSheet } from "react-native";
 import { Gesture, GestureDetector } from "react-native-gesture-handler";
 import { runOnJS } from "react-native-reanimated";
@@ -20,6 +20,7 @@ export type SketchCanvasProps = {
   color: string;
   strokeWidth: number;
   onCommitStroke?: (stroke: Stroke) => void;
+  clearSignal?: number; // increments to clear canvas from parent
 };
 
 export const SketchCanvas: React.FC<SketchCanvasProps> = ({
@@ -29,6 +30,7 @@ export const SketchCanvas: React.FC<SketchCanvasProps> = ({
   color,
   strokeWidth,
   onCommitStroke,
+  clearSignal,
 }) => {
   const editingPointsRef = useRef<Point[]>([]);
   const livePathRef = useRef(Skia.Path.Make());
@@ -42,6 +44,16 @@ export const SketchCanvas: React.FC<SketchCanvasProps> = ({
   const [committedPaths, setCommittedPaths] = useState<CommittedPath[]>([]);
 
   const bgImage = useImage(backgroundImageUri ?? null);
+
+  // External clear trigger from parent
+  useEffect(() => {
+    // run only when clearSignal changes
+    if (clearSignal === undefined) return;
+    editingPointsRef.current = [];
+    livePathRef.current.reset();
+    setCommittedPaths([]);
+    setRenderVersion((v) => v + 1);
+  }, [clearSignal]);
 
   const handleCommit = useCallback(
     (points: Point[]) => {

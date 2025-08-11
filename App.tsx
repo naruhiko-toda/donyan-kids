@@ -15,11 +15,18 @@ export default function App() {
   const [index, setIndex] = useState(0);
   const [color, _setColor] = useState("#111827");
   const [strokeWidth, _setStrokeWidth] = useState(8);
+  const [clearVersion, setClearVersion] = useState(0);
 
   const currentImage = useMemo(() => resolveImagePath(masterImages[index]?.path ?? ""), [index]);
 
   const nextImage = useCallback(() => {
     setIndex((prev) => (prev + 1) % masterImages.length);
+    // 画像切り替え時は描画をリセット
+    setClearVersion((v) => v + 1);
+  }, []);
+
+  const resetCanvas = useCallback(() => {
+    setClearVersion((v) => v + 1);
   }, []);
 
   return (
@@ -30,6 +37,9 @@ export default function App() {
             <Pressable style={[styles.btn, styles.btnPrimary]} onPress={nextImage}>
               <Text style={styles.btnText}>次の画像</Text>
             </Pressable>
+            <Pressable style={[styles.btn, styles.btnDanger]} onPress={resetCanvas}>
+              <Text style={styles.btnText}>リセット</Text>
+            </Pressable>
           </View>
 
           <View style={styles.canvasContainer}>
@@ -39,6 +49,7 @@ export default function App() {
               backgroundImageUri={currentImage}
               color={color}
               strokeWidth={strokeWidth}
+              clearSignal={clearVersion}
             />
           </View>
         </View>
@@ -70,6 +81,9 @@ const styles = StyleSheet.create({
   },
   btnPrimary: {
     backgroundColor: "#2563eb",
+  },
+  btnDanger: {
+    backgroundColor: "#ef4444",
   },
   btnText: {
     color: "#fff",
